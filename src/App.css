@@ -1,0 +1,25 @@
+.app-container {
+  position: relative;
+  background: black;
+  height: 500vh;
+}
+
+
+main {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  color: white
+}
+
+
+p {
+  font-size: 20px;
+  margin: 20px 0;
+}
+
+div[data-scrolly-container="true"]:nth-child(2) {
+  width: 1vh !important;
+  height: 1vh !important;
+}
