@@ -1,77 +1,75 @@
-import { useEffect, useRef, useState } from "react";
-import ScrollMagic from "scrollmagic";
-import "./App.css";
+// App.jsx
+import { useEffect, useRef } from "react";
 
 function App() {
-  const videoRef = useRef(null);
-  const [duration, setDuration] = useState(0);
+  const canvasRef = useRef(null);
+  const frameCount = 355; // total frames you exported with ffmpeg
+  const currentFrame = (index) =>
+    `/frames/frame_${String(index).padStart(4, "0")}.jpg`;
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
 
-    const handleLoaded = () => {
-      setDuration(video.duration || 0);
+    canvas.width = 1080; // match your video width
+    canvas.height = 720; // match your video height
+
+    const images = [];
+    let frameIndex = 0;
+
+    // Preload frames
+    for (let i = 1; i <= frameCount; i++) {
+      const img = new Image();
+      img.src = currentFrame(i);
+      images.push(img);
+    }
+
+    const render = () => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(images[frameIndex], 0, 0, canvas.width, canvas.height);
     };
 
-    video.addEventListener("loadedmetadata", handleLoaded);
+    images[0].onload = render;
 
-    const controller = new ScrollMagic.Controller();
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const maxScrollTop = document.body.scrollHeight - window.innerHeight;
+      const scrollFraction = scrollTop / maxScrollTop;
 
-    new ScrollMagic.Scene({
-      duration: 3000, // scrolling distance controls playback
-      triggerElement: "#video-trigger", // ✅ wrapper div, not video
-      triggerHook: 0,
-    })
-      .addTo(controller)
-      .on("progress", (event) => {
-        if (!duration) return;
+      frameIndex = Math.min(
+        frameCount - 1,
+        Math.floor(scrollFraction * frameCount)
+      );
 
-        const scrollProgress = event.progress;
-        const targetTime = scrollProgress * duration;
-
-        requestAnimationFrame(() => {
-          video.currentTime = targetTime;
-        });
-      });
-
-    return () => {
-      video.removeEventListener("loadedmetadata", handleLoaded);
-      controller.destroy(true);
+      requestAnimationFrame(render);
     };
-  }, [duration]);
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <div style={{ height: "500vh", background: "black" }}>
-      {/* Wrapper div for ScrollMagic trigger */}
-      <div id="video-trigger" style={{ height: "3000px" }}>
-        <video
-          ref={videoRef}
-          src="/full-video.mp4"
-          playsInline
-          muted
-          preload="auto"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            pointerEvents: "none",
-          }}
-        />
-      </div>
-
-      {/* Some content after */}
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        }}
+      />
       <div style={{ position: "relative", top: "400vh", color: "white" }}>
-        <h1>Some text after the video</h1>
+        <h1>Some text after the animation</h1>
       </div>
     </div>
   );
 }
 
 export default App;
+
 
 
 // <div className="app-container">
